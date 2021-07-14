@@ -512,6 +512,8 @@ const htmlStr = await render(this.ctx, config)
 
 ## 如何自定义页面标题, meta 等信息
 
+开发者需要想清楚修改 `meta` 等 `head` 信息的目的是什么。如果只是单纯的前端页面展示，那么只需要在客户端通过 `document.title = xxx` 形式来修改即可。如果是为了满足 `SEO` 爬虫需求，则需要在服务端支出时渲染正确的信息。
+
 本框架不需要也不会提供类似 `next/head`, `react-helment` 之类的解决方案，这是完全没有必要的。 
 
 由于我们 `All in jsx/Vue SFC`, 这块的实现也是非常简单的。`layout` 在服务端被渲染时可以拿到请求的 `ctx`，根据 `ctx` 上的信息来 `render` 不同的生成结果
@@ -942,3 +944,7 @@ module.exports = {
   }
 }
 ```
+
+### 封装双端通用的请求
+
+推荐用 [axios](https://www.npmjs.com/package/axios) 来发起 `http` 请求会自动根据当前环境判断应该使用 `xhr` 还是 `http` 模块发起。针对 `cookie` 的携带，客户端请求时同源请求会自动带上 `cookie` 当跨域请求时需要通过 `withCredentials` 配置来带上 `cookie`。服务端请求时可以通过 `ctx.req.cookies` 具体查看对应服务端框架文档拿到当前请求 `cookie`
