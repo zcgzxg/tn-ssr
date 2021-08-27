@@ -1,19 +1,20 @@
 import * as React from 'react'
 import { StaticRouter } from 'react-router-dom'
-import { findRoute, getManifest, logGreen, normalizePath } from 'ssr-server-utils'
+import { findRoute, getManifest, logGreen, normalizePath, addAsyncChunk } from 'ssr-server-utils'
 import { ISSRContext, IGlobal, IConfig, ReactRoutesType, ReactServerESMFeRouteItem } from 'ssr-types-react'
+import * as serialize from 'serialize-javascript'
 // @ts-expect-error
-import * as Routes from 'ssr-temporary-routes'
+import * as Routes from '_build/ssr-temporary-routes'
 import { serverContext } from './create-context'
 // @ts-expect-error
 import Layout from '@/components/layout/index.tsx'
 
-const { FeRoutes, layoutFetch, BASE_NAME } = Routes as ReactRoutesType
+const { FeRoutes, layoutFetch, BASE_NAME, state } = Routes as ReactRoutesType
 
 declare const global: IGlobal
 
 const serverRender = async (ctx: ISSRContext, config: IConfig): Promise<React.ReactElement> => {
-  const { cssOrder, jsOrder, dynamic, mode, chunkName } = config
+  const { cssOrder, jsOrder, dynamic, mode, chunkName, parallelFetch, disableClientRender } = config
   global.window = global.window ?? {} // 防止覆盖上层应用自己定义的 window 对象
   let path = ctx.request.path // 这里取 pathname 不能够包含 queyString
   if (BASE_NAME) {
@@ -21,7 +22,7 @@ const serverRender = async (ctx: ISSRContext, config: IConfig): Promise<React.Re
   }
   const { window } = global
   const routeItem = findRoute<ReactServerESMFeRouteItem>(FeRoutes, path)
-  const ViteMode = process.env.BUILD_TOOL === 'vite'
+  const viteMode = process.env.BUILD_TOOL === 'vite'
 
   if (!routeItem) {
     throw new Error(`
@@ -32,14 +33,15 @@ const serverRender = async (ctx: ISSRContext, config: IConfig): Promise<React.Re
 
   let dynamicCssOrder = cssOrder
 
-  if (dynamic) {
+  if (dynamic && !viteMode) {
     dynamicCssOrder = cssOrder.concat([`${routeItem.webpackChunkName}.css`])
+    dynamicCssOrder = await addAsyncChunk(dynamicCssOrder, routeItem.webpackChunkName)
   }
-  const manifest = ViteMode ? {} : await getManifest()
+  const manifest = viteMode ? {} : await getManifest()
 
   const injectCss: JSX.Element[] = []
 
-  if (ViteMode) {
+  if (viteMode) {
     injectCss.push(<script src="/@vite/client" type="module" key="vite-client"/>)
     injectCss.push(<script key="vite-react-refresh" type="module" dangerouslySetInnerHTML={{
       __html: ` import RefreshRuntime from "/@react-refresh"
@@ -58,7 +60,13 @@ const serverRender = async (ctx: ISSRContext, config: IConfig): Promise<React.Re
     })
   }
 
-  const injectScript = ViteMode ? [
+  if (disableClientRender) {
+    injectCss.push(<script key="disableClientRender" dangerouslySetInnerHTML={{
+      __html: 'window.__disableClientRender__ = true'
+    }}/>)
+  }
+
+  const injectScript = viteMode ? [
     <script key="viteWindowInit" dangerouslySetInnerHTML={{
       __html: 'window.__USE_VITE__=true'
     }} />,
@@ -72,20 +80,43 @@ const serverRender = async (ctx: ISSRContext, config: IConfig): Promise<React.Re
   }
 
   const isCsr = !!(mode === 'csr' || ctx.request.query?.csr)
-  const Component = routeItem.component
+  const { component, fetch } = routeItem
+  const Component = component
+
   if (isCsr) {
     logGreen(`Current path ${path} use csr render mode`)
   }
-  const layoutFetchData = (!isCsr && layoutFetch) ? await layoutFetch(ctx) : null
-  const fetchData = (!isCsr && routeItem.fetch) ? await routeItem.fetch(ctx) : null
-  const combineData = isCsr ? null : Object.assign({}, layoutFetchData ?? {}, fetchData ?? {})
+  let layoutFetchData = {}
+  let fetchData = {}
+  if (!isCsr) {
+    // csr 下不需要服务端获取数据
+    if (parallelFetch) {
+      [layoutFetchData, fetchData] = await Promise.all([
+        layoutFetch ? layoutFetch(ctx) : Promise.resolve({}),
+        fetch ? fetch(ctx) : Promise.resolve({})
+      ])
+    } else {
+      if (layoutFetch) {
+        layoutFetchData = await layoutFetch(ctx)
+      }
+      if (fetch) {
+        fetchData = await fetch(ctx)
+      }
+    }
+  }
+  const combineData = isCsr ? null : Object.assign(state ?? {}, layoutFetchData ?? {}, fetchData ?? {})
+
+  const injectState = isCsr ? null : <script dangerouslySetInnerHTML={{
+    __html: `window.__USE_SSR__=true; window.__INITIAL_DATA__ =${serialize(combineData)}`
+  }} />
+
   const Context = serverContext(combineData) // 服务端需要每个请求创建新的独立的 context
   window.STORE_CONTEXT = Context // 为每一个新的请求都创建一遍 context 并且覆盖 window 上的属性，使得无需通过props层层传递读取
 
   return (
     <StaticRouter>
       <Context.Provider value={{ state: combineData }}>
-        <Layout ctx={ctx} config={config} staticList={staticList}>
+        <Layout ctx={ctx} config={config} staticList={staticList} injectState={injectState}>
           {isCsr ? <></> : <Component />}
         </Layout>
       </Context.Provider>
@@ -93,4 +124,6 @@ const serverRender = async (ctx: ISSRContext, config: IConfig): Promise<React.Re
   )
 }
 
-export default serverRender
+export {
+  serverRender
+}

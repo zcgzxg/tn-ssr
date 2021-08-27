@@ -49,9 +49,9 @@ const loadConfig = (): IConfig => {
 
   const whiteList: RegExp[] = []
 
-  const jsOrder = [`runtime~${chunkName}.js`, 'vendor.js', `${chunkName}.js`]
+  const jsOrder = [`runtime~${chunkName}.js`, 'vendor.js', `${chunkName}.js`].concat(userConfig.extraJsOrder ?? [])
 
-  const cssOrder = [`${chunkName}.css`]
+  const cssOrder = [`${chunkName}.css`].concat(userConfig.extraCssOrder ?? [])
 
   const webpackStatsOption = {
     assets: true, // 添加资源信息
@@ -72,7 +72,6 @@ const loadConfig = (): IConfig => {
     serverOutPut: join(cwd, './build/server')
   })
 
-  const cssModulesWhiteList = [/antd/, /swiper/]
   const webpackDevServerConfig = Object.assign({
     stats: webpackStatsOption,
     disableInfo: true, // 关闭webpack-dev-server 自带的server Info信息
@@ -119,7 +118,6 @@ const loadConfig = (): IConfig => {
     getOutput,
     webpackStatsOption,
     whiteList,
-    cssModulesWhiteList,
     dynamic,
     mode,
     stream,

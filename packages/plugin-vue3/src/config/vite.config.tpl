@@ -15,8 +15,14 @@ module.exports = {
   },
   resolve: {
     alias: {
-      '@': join(process.cwd(), './web')
+      '@': join(process.cwd(), './web'),
+      _build: join(process.cwd(), './build')
     },
     extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue']
+  },
+  build: {
+    rollupOptions: {
+      input: './node_modules/ssr-plugin-vue3/esm/entry/client-entry.js'
+    }
   }
 }
