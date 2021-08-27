@@ -63,9 +63,21 @@ function matchPath (pathname, options = {}) {
   }, null)
 }
 
-function findRoute<T extends {path: string}> (Routes: T[], path: string): T {
+function findRoute<T extends {path: string, children?: T[]}> (Routes: T[], path: string): T {
+  // 递归查找路由,以匹配路由和子路由
+  const recurseFind = (route: T) => {
+    if (matchPath(path, route) && matchPath(path, route).isExact) {
+      return true
+    } else if (route.children) {
+      return route.children.some(subRoute => recurseFind({
+        ...subRoute,
+        path: route.path + '/' + subRoute.path
+      }))
+    }
+  }
+
   // 根据请求的path来匹配到对应的Component
-  const route = Routes.find(route => matchPath(path, route) && matchPath(path, route).isExact)
+  const route = Routes.find(recurseFind)
   debug(`With path "${path}" find Route: `, route)
   return route
 }

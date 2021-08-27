@@ -1,45 +1,45 @@
 {
-  "name": "ssr-server-utils",
-  "version": "5.5.71",
-  "description": "utils for serverless ssr",
-  "main": "./cjs/index.js",
-  "module": "./esm/index.js",
-  "sideEffects": false,
-  "scripts": {
-    "build": "concurrently \"tsc -p ./tsconfig.cjs.json --inlineSourceMap false\" \" tsc -p ./tsconfig.esm.json --inlineSourceMap false\"",
-    "build:only": "concurrently \"tsc-transpile-only --skipLibCheck -p ./tsconfig.cjs.json --inlineSourceMap false\" \" tsc-transpile-only --skipLibCheck -p ./tsconfig.esm.json --inlineSourceMap false\"",
-    "watch": "concurrently \"tsc -w -p ./tsconfig.cjs.json \" \"tsc -w -p ./tsconfig.esm.json \"",
-    "watch:cjs": "tsc -w -p ./tsconfig.cjs.json"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/ykfe/ssr.git"
-  },
-  "keywords": [
-    "cli",
-    "serverless",
-    "ssr",
-    "react",
-    "vue"
-  ],
-  "author": "zhangyuang",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/ykfe/ssr/issues"
-  },
-  "homepage": "https://github.com/ykfe/ssr#readme",
-  "devDependencies": {
-    "@types/shelljs": "^0.8.7",
-    "concurrently": "^5.1.0"
-  },
-  "dependencies": {
-    "axios": "^0.21.1",
-    "debug": "^4.1.1",
-    "http-proxy-middleware": "^1.0.6",
-    "koa2-connect": "^1.0.2",
-    "path-to-regexp": "^6.2.0",
-    "readable-stream": "^3.6.0",
-    "shelljs": "^0.8.3",
-    "ssr-types": "^5.5.70"
-  }
+    "name": "tn-ssr-server-utils",
+    "version": "5.5.71",
+    "description": "utils for serverless ssr",
+    "main": "./cjs/index.js",
+    "module": "./esm/index.js",
+    "sideEffects": false,
+    "scripts": {
+        "build": "concurrently \"tsc -p ./tsconfig.cjs.json --inlineSourceMap false\" \" tsc -p ./tsconfig.esm.json --inlineSourceMap false\"",
+        "build:only": "concurrently \"tsc-transpile-only --skipLibCheck -p ./tsconfig.cjs.json --inlineSourceMap false\" \" tsc-transpile-only --skipLibCheck -p ./tsconfig.esm.json --inlineSourceMap false\"",
+        "watch": "concurrently \"tsc -w -p ./tsconfig.cjs.json \" \"tsc -w -p ./tsconfig.esm.json \"",
+        "watch:cjs": "tsc -w -p ./tsconfig.cjs.json"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ykfe/ssr.git"
+    },
+    "keywords": [
+        "cli",
+        "serverless",
+        "ssr",
+        "react",
+        "vue"
+    ],
+    "author": "zcgzxg",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/ykfe/ssr/issues"
+    },
+    "homepage": "https://github.com/ykfe/ssr#readme",
+    "devDependencies": {
+        "@types/shelljs": "^0.8.7",
+        "concurrently": "^5.1.0"
+    },
+    "dependencies": {
+        "axios": "^0.21.1",
+        "debug": "^4.1.1",
+        "http-proxy-middleware": "^1.0.6",
+        "koa2-connect": "^1.0.2",
+        "path-to-regexp": "^6.2.0",
+        "readable-stream": "^3.6.0",
+        "shelljs": "^0.8.3",
+        "ssr-types": "^5.5.70"
+    }
 }
