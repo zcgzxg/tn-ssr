@@ -1,8 +1,11 @@
-import * as WebpackChain from 'webpack-chain'
 import { StyleOptions } from 'ssr-types'
+import { Config } from 'ssr-types/cjs/third-party/webpack-chain'
+import type { loader } from 'webpack'
 import { loadConfig } from '../loadConfig'
 
-const setStyle = (chain: WebpackChain, reg: RegExp, options: StyleOptions, isReact?: boolean) => {
+const genericNames = require('generic-names')
+
+const setStyle = (chain: Config, reg: RegExp, options: StyleOptions) => {
   const { css, isDev } = loadConfig()
   const { include, exclude, modules, importLoaders, loader } = options
   const MiniCssExtractPlugin = require('mini-css-extract-plugin')
@@ -11,14 +14,20 @@ const setStyle = (chain: WebpackChain, reg: RegExp, options: StyleOptions, isRea
   const userCssloaderOptions = css?.().loaderOptions?.cssOptions ?? {}
   const cssloaderOptions = {
     importLoaders: importLoaders,
-    modules: modules
+    modules: modules,
+    url: false // disable css-loader handle url() syntax
   }
-  if (isReact) {
+  if (modules?.auto) {
+    // 对齐 css-loader 与 postcss-modules 生成 hash 方式
     // @ts-expect-error
-    cssloaderOptions.localIdentName = '[name]__[local]___[hash:base64:5]'
+    cssloaderOptions.modules.getLocalIdent = (context: loader.LoaderContext, localIdentName, localName, options) => {
+      return genericNames('[name]__[local]___[hash:base64:5]', {
+        context: process.cwd()
+      })(localName, context.resourcePath)
+    }
   }
-  Object.assign(cssloaderOptions, userCssloaderOptions)
 
+  Object.assign(cssloaderOptions, userCssloaderOptions)
   const postCssPlugins = css?.().loaderOptions?.postcss?.plugins ?? [] // 用户自定义 postcss 插件
   const postCssOptions = Object.assign({
     ident: 'postcss',
@@ -50,6 +59,10 @@ const setStyle = (chain: WebpackChain, reg: RegExp, options: StyleOptions, isRea
     })
     .use('MiniCss')
     .loader(MiniCssExtractPlugin.loader)
+    .options({
+      // vite 场景下服务端 bundle 输出 css 文件，否则 服务端不输出
+      emit: process.env.BUILD_TOOL === 'vite' ? true : !options.isServer
+    })
     .end()
     .use('css-loader')
     .loader(loadModule('css-loader'))

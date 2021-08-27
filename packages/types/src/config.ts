@@ -17,6 +17,8 @@ export interface IConfig {
   proxy?: any
   cssOrder: string[]
   jsOrder: string[]
+  extraJsOrder?: string[]
+  extraCssOrder?: string[]
   css?: () => {
     loaderOptions?: {
       cssOptions?: any
@@ -35,13 +37,16 @@ export interface IConfig {
   moduleFileExtensions: string[]
   whiteList: RegExp[]
   cloudIDE?: boolean
-  cssModulesWhiteList: RegExp[]
   prefix?: string
   dynamic: boolean
   mode: string
   webpackDevServerConfig?: any
   stream: boolean
   customeHeadScript?: Array<{
+    describe: object
+    content: string
+  }>
+  customeFooterScript?: Array<{
     describe: object
     content: string
   }>
@@ -53,7 +58,16 @@ export interface IConfig {
   corejs: boolean
   https: boolean
   babelExtraModule?: RuleSetCondition
+  routerPriority?: Record<string, number>
+  routerOptimize?: {
+    include?: string[]
+    exclude?: string[]
+  }
+  parallelFetch?: boolean
+  nestStartTips?: string
+  disableClientRender?: boolean
 }
+
 type Optional <T>= { [key in keyof T]?: T[key] }
 
 export interface proxyOptions {
@@ -65,9 +79,10 @@ export interface StyleOptions {
   rule: string
   include?: RegExp | RegExp[]
   exclude?: RegExp | RegExp[]
-  modules: boolean
+  modules: any
   loader?: string
   importLoaders: number
+  isServer: boolean
 }
 
 export interface IPlugin {

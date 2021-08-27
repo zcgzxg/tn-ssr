@@ -1,11 +1,13 @@
 import * as Koa from 'koa'
-import * as Express from 'express'
+import { Request, Response } from 'express'
 import { FaaSHTTPContext } from '@midwayjs/faas-typings'
 import { Context } from 'egg'
 
-interface ExpressContext {
-  request: Express.Request
-  response: Express.Response
+export interface ExpressContext {
+  request: Request & {
+    params: Request['params']
+  }
+  response: Response
 }
 
 export type ISSRContext<T={}> = (Koa.Context|ExpressContext|FaaSHTTPContext|Context) & T
@@ -18,6 +20,7 @@ export interface IWindow extends Window {
   __INITIAL_DATA__?: any
   STORE_CONTEXT?: any
   __USE_VITE__?: boolean
+  __disableClientRender__?: boolean
 }
 
 export interface IGlobal {
